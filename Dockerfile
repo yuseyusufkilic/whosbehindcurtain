@@ -22,4 +22,4 @@ ENV Game__ProgressPath=/data/progress
 ENV Proxy__TrustForwardedHeaders=true
 EXPOSE 8080
 USER $APP_UID
-ENTRYPOINT ["dotnet", "HiddenSeason.Api.dll"]
+CMD ["dotnet", "HiddenSeason.Api.dll"]
