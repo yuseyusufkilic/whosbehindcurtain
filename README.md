@@ -1,5 +1,7 @@
 # Hidden Star
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/yuseyusufkilic/whosbehindcurtain)
+
 Günlük futbolcu-sezon tahmin oyunu. React arayüzü ile .NET API üretimde aynı container içinde ve aynı origin üzerinden çalışır.
 
 ## Yerel geliştirme

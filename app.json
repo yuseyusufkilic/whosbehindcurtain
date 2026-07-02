@@ -1,0 +1,26 @@
+{
+  "name": "Hidden Star",
+  "description": "Günlük futbolcu-sezon tahmin oyunu.",
+  "repository": "https://github.com/yuseyusufkilic/whosbehindcurtain",
+  "stack": "container",
+  "addons": [
+    "heroku-postgresql:essential-0"
+  ],
+  "env": {
+    "SESSION_SIGNING_KEY": {
+      "description": "Anonim oyuncu oturumlarını imzalamak için kalıcı secret.",
+      "generator": "secret"
+    },
+    "Proxy__TrustForwardedHeaders": {
+      "description": "Heroku proxy başlıklarını güvenilir kabul eder.",
+      "value": "true"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "success_url": "/"
+}
