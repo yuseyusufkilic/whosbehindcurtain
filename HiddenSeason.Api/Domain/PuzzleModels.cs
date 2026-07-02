@@ -43,7 +43,8 @@ public sealed record PuzzleResponse(
     bool FreeClueAvailable,
     IReadOnlyList<string> Guesses,
     IEnumerable<ClueResponse> Clues,
-    GameResult? Result);
+    GameResult? Result,
+    PlayerStatsResponse? Stats);
 
 public sealed record ArchiveItemResponse(
     string PuzzleId,
@@ -57,17 +58,27 @@ public sealed record RevealResponse(
     string Value,
     int CostApplied,
     int Score,
-    bool FreeClueAvailable);
+    bool FreeClueAvailable,
+    bool IsComplete,
+    GameResult? Result,
+    PlayerStatsResponse? Stats);
 
 public sealed record GuessResponse(
     bool Correct,
+    bool Duplicate,
     int Score,
     int AttemptsLeft,
     bool IsComplete,
-    GameResult? Result);
+    GameResult? Result,
+    PlayerStatsResponse? Stats);
 
 public sealed record RevealOutcome(string ClueId, string Value, int CostApplied);
-public sealed record GuessOutcome(bool Correct);
+public sealed record GuessOutcome(bool Correct, bool IsDuplicate = false);
+public sealed record PlayerStatsResponse(
+    int GamesPlayed,
+    int AverageScore,
+    int SolvedCount,
+    IReadOnlyList<int> LastFiveScores);
 public sealed record GameResult(
     string PlayerName,
     string Season,

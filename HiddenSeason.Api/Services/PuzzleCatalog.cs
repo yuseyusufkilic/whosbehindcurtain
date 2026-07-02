@@ -46,9 +46,8 @@ public sealed class PuzzleCatalog
         return new PuzzleCatalog(document ?? throw new InvalidOperationException("Puzzle kataloğu okunamadı."));
     }
 
-    public DailyPuzzle GetDaily(DateOnly date) =>
-        _puzzlesByDate.LastOrDefault(puzzle => puzzle.PublishDate <= date)
-        ?? _puzzlesByDate[0];
+    public DailyPuzzle? GetDaily(DateOnly date) =>
+        _puzzlesByDate.FirstOrDefault(puzzle => puzzle.PublishDate == date);
 
     public DailyPuzzle? GetById(string id) => _puzzlesById.GetValueOrDefault(id);
 

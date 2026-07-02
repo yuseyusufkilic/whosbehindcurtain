@@ -66,6 +66,34 @@ public sealed class FileGameProgressStore
         }
     }
 
+    public async Task<PlayerStatsResponse> GetStatsAsync(
+        string subjectId,
+        CancellationToken cancellationToken = default)
+    {
+        var gate = _locks.GetOrAdd(subjectId, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync(cancellationToken);
+        try
+        {
+            var progress = await LoadAsync(subjectId, cancellationToken);
+            var completed = progress.Games.Values
+                .Where(game => game.IsComplete)
+                .OrderByDescending(game => game.UpdatedAt)
+                .ToArray();
+
+            return new PlayerStatsResponse(
+                completed.Length,
+                completed.Length == 0
+                    ? 0
+                    : (int)Math.Round(completed.Average(game => game.Score)),
+                completed.Count(game => game.IsSolved),
+                completed.Take(5).Select(game => game.Score).ToArray());
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
     private async Task<PlayerProgress> LoadAsync(string subjectId, CancellationToken cancellationToken)
     {
         var path = GetPath(subjectId);

@@ -1,0 +1,70 @@
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/hidden-star
+  CATALOG_URL: https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/data
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Download Transfermarkt data
+        run: |
+          mkdir -p .data/transfermarkt
+          for file in players appearances games clubs competitions; do
+            curl --fail --retry 3 --location "$CATALOG_URL/$file.csv.gz" --output ".data/transfermarkt/$file.csv.gz"
+          done
+      - name: Generate daily catalog
+        run: python tools/generate_catalog.py --data .data/transfermarkt --output HiddenSeason.Api/Data/puzzles.json --start-date 2026-07-02 --days 1095
+      - name: Build web
+        working-directory: web
+        run: npm ci && npm run lint && npm run build
+      - name: Build API
+        run: dotnet build HiddenSeason.Api/HiddenSeason.Api.csproj -c Release
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ github.sha }},${{ env.IMAGE }}:latest
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/container-apps-deploy-action@v2
+        with:
+          imageToDeploy: ${{ env.IMAGE }}:${{ github.sha }}
+          containerAppName: ${{ secrets.AZURE_CONTAINER_APP }}
+          resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          registryUrl: ghcr.io
+          registryUsername: ${{ github.actor }}
+          registryPassword: ${{ secrets.GHCR_PAT }}

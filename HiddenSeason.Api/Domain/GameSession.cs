@@ -44,6 +44,7 @@ public sealed class GameSession
         }
 
         Score = Math.Max(0, Score - costApplied);
+        IsComplete = Score == 0;
         UpdatedAt = DateTimeOffset.UtcNow;
 
         return new RevealOutcome(clue.Id, clue.Value, costApplied);
@@ -56,8 +57,15 @@ public sealed class GameSession
             return new GuessOutcome(IsSolved);
         }
 
-        Guesses.Add(playerName.Trim());
-        IsSolved = TextNormalizer.Normalize(playerName) == TextNormalizer.Normalize(puzzle.Answer);
+        var trimmedPlayerName = playerName.Trim();
+        var normalizedPlayerName = TextNormalizer.Normalize(trimmedPlayerName);
+        if (Guesses.Any(previous => TextNormalizer.Normalize(previous) == normalizedPlayerName))
+        {
+            return new GuessOutcome(false, true);
+        }
+
+        Guesses.Add(trimmedPlayerName);
+        IsSolved = normalizedPlayerName == TextNormalizer.Normalize(puzzle.Answer);
 
         if (!IsSolved)
         {
@@ -65,7 +73,7 @@ public sealed class GameSession
             Score = Math.Max(0, Score - 10);
         }
 
-        IsComplete = IsSolved || AttemptsLeft == 0;
+        IsComplete = IsSolved || AttemptsLeft == 0 || Score == 0;
         UpdatedAt = DateTimeOffset.UtcNow;
         return new GuessOutcome(IsSolved);
     }
@@ -93,7 +101,8 @@ public sealed class GameSession
                 isRevealed,
                 isRevealed ? clue.Value : null);
         }),
-        IsComplete ? BuildResult(puzzle) : null);
+        IsComplete ? BuildResult(puzzle) : null,
+        null);
 
     public GameResult BuildResult(DailyPuzzle puzzle) => new(
         puzzle.Answer,

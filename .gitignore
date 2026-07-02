@@ -4,6 +4,10 @@ obj/
 *.user
 *.suo
 .vs/
+.dotnet/
+dotnet-install.ps1
+__pycache__/
+*.pyc
 
 # Node / Web
 node_modules/
@@ -12,6 +16,7 @@ dist/
 .env.local
 
 # Data (progress files - user-specific)
+/data/
 HiddenSeason.Api/Data/progress/
 HiddenSeason.Api/bin/
 HiddenSeason.Api/obj/

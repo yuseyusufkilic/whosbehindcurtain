@@ -18,7 +18,7 @@ builder.Services.AddHealthChecks();
 
 var dataProtection = builder.Services
     .AddDataProtection()
-    .SetApplicationName("HiddenSeason");
+    .SetApplicationName("HiddenStar");
 
 var keysPath = builder.Configuration["DataProtection:KeysPath"];
 if (!string.IsNullOrWhiteSpace(keysPath))
@@ -90,7 +90,7 @@ if (builder.Configuration.GetValue<bool>("Proxy:TrustForwardedHeaders"))
     builder.Services.Configure<ForwardedHeadersOptions>(options =>
     {
         options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-        options.KnownNetworks.Clear();
+        options.KnownIPNetworks.Clear();
         options.KnownProxies.Clear();
         options.ForwardLimit = 1;
     });
@@ -112,6 +112,8 @@ if (app.Configuration.GetValue<bool>("Proxy:TrustForwardedHeaders"))
 app.UseCors();
 app.UseRateLimiter();
 app.UseSecurityHeaders();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 var api = app.MapGroup("/api");
 
@@ -122,14 +124,24 @@ api.MapGet("/puzzles/daily", async (
     FileGameProgressStore progress,
     CancellationToken cancellationToken) =>
 {
-    var puzzle = catalog.GetDaily(DateOnly.FromDateTime(DateTime.UtcNow));
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var puzzle = catalog.GetDaily(today);
+    if (puzzle is null)
+    {
+        return Results.Problem(
+            statusCode: StatusCodes.Status503ServiceUnavailable,
+            title: "Günün oyuncusu henüz hazır değil.",
+            detail: $"{today:yyyy-MM-dd} tarihi için puzzle kataloğu oluşturulmamış.");
+    }
+
     var subjectId = anonymousSessions.GetOrCreate(context);
     var response = await progress.ExecuteAsync(
         subjectId,
         puzzle.Id,
         session => session.ToPuzzleResponse(puzzle),
         cancellationToken);
-    return Results.Ok(response);
+    var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("read");
 
 api.MapGet("/puzzles/archive", async (
@@ -178,7 +190,8 @@ api.MapGet("/puzzles/{puzzleId}",async (
         puzzle.Id,
         session => session.ToPuzzleResponse(puzzle),
         cancellationToken);
-    return Results.Ok(response);
+    var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("read");
 
 api.MapPost("/puzzles/{puzzleId}/reveal",async (
@@ -220,13 +233,20 @@ api.MapPost("/puzzles/{puzzleId}/reveal",async (
                     outcome.Value,
                     outcome.CostApplied,
                     session.Score,
-                    session.FreeClueAvailable);
+                    session.FreeClueAvailable,
+                    session.IsComplete,
+                    session.IsComplete ? session.BuildResult(puzzle) : null,
+                    null);
         },
         cancellationToken);
 
-    return response is null
-        ? Results.BadRequest(new { message = "Bu ipucu açılamadı." })
-        : Results.Ok(response);
+    if (response is null)
+    {
+        return Results.BadRequest(new { message = "Bu ipucu açılamadı." });
+    }
+
+    var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("mutation");
 
 api.MapPost("/puzzles/{puzzleId}/guess",async (
@@ -268,14 +288,17 @@ api.MapPost("/puzzles/{puzzleId}/guess",async (
             var outcome = session.Guess(puzzle, body.PlayerName);
             return new GuessResponse(
                 outcome.Correct,
+                outcome.IsDuplicate,
                 session.Score,
                 session.AttemptsLeft,
                 session.IsComplete,
-                session.IsComplete ? session.BuildResult(puzzle) : null);
+                session.IsComplete ? session.BuildResult(puzzle) : null,
+                null);
         },
         cancellationToken);
 
-    return Results.Ok(response);
+    var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("mutation");
 
 api.MapGet("/players/search", (string? q, PuzzleCatalog catalog) =>
@@ -295,6 +318,8 @@ api.MapGet("/players/search", (string? q, PuzzleCatalog catalog) =>
 
 api.MapHealthChecks("/health");
 
+app.MapFallbackToFile("index.html");
+
 app.Run();
 
 public partial class Program;
@@ -308,7 +333,8 @@ static class SecurityHeaderExtensions
             context.Response.Headers["X-Frame-Options"] = "DENY";
             context.Response.Headers["Referrer-Policy"] = "no-referrer";
             context.Response.Headers["Content-Security-Policy"] =
-                "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+                "default-src 'self'; img-src 'self' data: https://img.a.transfermarkt.technology https://tmssl.akamaized.net; " +
+                "object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'";
             await next();
         });
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import './App.css'
 
 type Clue = {
@@ -19,6 +19,13 @@ type Result = {
   photoUrl: string
   clubLogoUrl: string
   solved: boolean
+}
+
+type PlayerStats = {
+  gamesPlayed: number
+  averageScore: number
+  solvedCount: number
+  lastFiveScores: number[]
 }
 
 type ArchiveItem = {
@@ -41,6 +48,7 @@ type Puzzle = {
   guesses: string[]
   clues: Clue[]
   result: Result | null
+  stats: PlayerStats | null
 }
 
 const iconMap: Record<string, string> = {
@@ -56,7 +64,9 @@ function App() {
   const [busyClue, setBusyClue] = useState<string | null>(null)
   const [isGuessing, setIsGuessing] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
-  const [streak, setStreak] = useState(() => Number(localStorage.getItem('hidden-season-streak') ?? '0'))
+  const [streak, setStreak] = useState(() => Number(
+    localStorage.getItem('hidden-star-streak') ?? localStorage.getItem('hidden-season-streak') ?? '0',
+  ))
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [archiveItems, setArchiveItems] = useState<ArchiveItem[]>([])
   const [activePuzzleId, setActivePuzzleId] = useState<string | null>(null)
@@ -68,7 +78,11 @@ function App() {
     setMessage('')
     const url = activePuzzleId ? `/api/puzzles/${activePuzzleId}` : '/api/puzzles/daily'
     fetch(url)
-      .then(response => response.json())
+      .then(async response => {
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.detail ?? data.message ?? 'Oyun yüklenemedi.')
+        return data
+      })
       .then(data => setPuzzle(data))
       .catch(() => setMessage('Oyun yüklenemedi. API bağlantısını kontrol et.'))
   }, [activePuzzleId])
@@ -92,15 +106,16 @@ function App() {
     if (!puzzle?.isComplete) return
 
     const today = new Date().toISOString().slice(0, 10)
-    const lastPlayed = localStorage.getItem('hidden-season-last-played')
+    const lastPlayed = localStorage.getItem('hidden-star-last-played')
+      ?? localStorage.getItem('hidden-season-last-played')
     if (lastPlayed === today) return
 
     const yesterday = new Date()
     yesterday.setUTCDate(yesterday.getUTCDate() - 1)
     const nextStreak = lastPlayed === yesterday.toISOString().slice(0, 10) ? streak + 1 : 1
 
-    localStorage.setItem('hidden-season-last-played', today)
-    localStorage.setItem('hidden-season-streak', String(nextStreak))
+    localStorage.setItem('hidden-star-last-played', today)
+    localStorage.setItem('hidden-star-streak', String(nextStreak))
     setStreak(nextStreak)
   }, [puzzle?.isComplete, streak])
 
@@ -116,10 +131,18 @@ function App() {
         body: JSON.stringify({ clueId }),
       })
       const data = await response.json()
+      if (!response.ok) {
+        setMessage(data.message ?? 'İpucu açılamadı.')
+        return
+      }
       setPuzzle(current => current ? {
         ...current,
         score: data.score,
         freeClueAvailable: data.freeClueAvailable,
+        isComplete: data.isComplete,
+        isSolved: false,
+        result: data.result,
+        stats: data.stats,
         clues: current.clues.map(clue => clue.id === clueId
           ? { ...clue, isRevealed: true, value: data.value, effectiveCost: 0 }
           : {
@@ -135,17 +158,29 @@ function App() {
   async function submitGuess(event: FormEvent) {
     event.preventDefault()
     if (!puzzle || !guess.trim() || puzzle.isComplete || isGuessing) return
+    const selectedGuess = guess.trim()
+    if (puzzle.guesses.some(previous => previous.localeCompare(selectedGuess, 'tr', { sensitivity: 'base' }) === 0)) {
+      setMessage('Bu futbolcuyu zaten tahmin ettin.')
+      return
+    }
     setIsGuessing(true)
     setMessage('')
 
     try {
-      const selectedGuess = guess.trim()
       const response = await fetch(`/api/puzzles/${puzzle.puzzleId}/guess`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-HS-Request': 'game' },
         body: JSON.stringify({ playerName: selectedGuess }),
       })
       const data = await response.json()
+      if (!response.ok) {
+        setMessage(data.message ?? 'Tahmin gönderilemedi.')
+        return
+      }
+      if (data.duplicate) {
+        setMessage('Bu futbolcuyu zaten tahmin ettin.')
+        return
+      }
 
       setPuzzle(current => current ? {
         ...current,
@@ -155,6 +190,7 @@ function App() {
         isSolved: data.correct,
         guesses: [...current.guesses, selectedGuess],
         result: data.result,
+        stats: data.stats,
       } : current)
       setMessage(data.correct ? 'BİLDİN. SOĞUKKANLI.' : data.isComplete ? 'Bugün olmadı.' : 'O değil. Bir daha düşün.')
       setGuess('')
@@ -180,7 +216,11 @@ function App() {
   async function shareResult() {
     if (!puzzle) return
     const blocks = puzzle.clues.map(clue => clue.isRevealed ? '🟩' : '⬛').join('')
-    const text = `HIDDEN SEASON #${puzzle.number} · ${puzzle.publishDate}\n${puzzle.score}/100 · ${puzzle.guesses.length}/3 TAHMİN\n${blocks}\nhiddenseason.app`
+    const average = puzzle.stats?.gamesPlayed ? `${puzzle.stats.averageScore}/100` : '—'
+    const recent = puzzle.stats?.lastFiveScores.length
+      ? puzzle.stats.lastFiveScores.join(' · ')
+      : '—'
+    const text = `HIDDEN STAR #${puzzle.number} · ${puzzle.publishDate}\n${puzzle.score}/100 · ${puzzle.guesses.length}/3 TAHMİN\n${blocks}\nORTALAMA ${average} · SON 5 ${recent}\nhiddenstar.app`
 
     if (navigator.share) {
       await navigator.share({ text })
@@ -197,9 +237,9 @@ function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Hidden Season ana sayfa">
+        <a className="brand" href="#top" aria-label="Hidden Star ana sayfa">
           <span className="brand-mark">H</span>
-          <span>HIDDEN<br />SEASON</span>
+          <span>HIDDEN<br />STAR</span>
         </a>
         <div className="top-stats">
             <div className="day-chip">{activePuzzleId ? 'ARŞİV' : 'DAILY'} <strong>#{puzzle.number}</strong></div>
@@ -316,6 +356,23 @@ function App() {
                 <div><strong>{puzzle.guesses.length}</strong><span>TAHMİN</span></div>
                 <div><strong>{puzzle.clues.filter(clue => clue.isRevealed).length}</strong><span>İPUCU</span></div>
               </div>
+              {puzzle.stats && (
+                <div className="performance-panel">
+                  <div className="performance-summary">
+                    <span>GENEL ORTALAMA</span>
+                    <strong>{puzzle.stats.averageScore}<small>/100</small></strong>
+                    <em>{puzzle.stats.gamesPlayed} OYUN · {puzzle.stats.solvedCount} DOĞRU</em>
+                  </div>
+                  <div className="recent-performance">
+                    <span>SON 5 PERFORMANS</span>
+                    <div>
+                      {puzzle.stats.lastFiveScores.map((score, index) => (
+                        <i key={`${score}-${index}`} style={{ '--score': `${score}%` } as CSSProperties}>{score}</i>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
               <button className="share-button" onClick={shareResult}>SONUCU PAYLAŞ ↗</button>
             </div>
           </section>
@@ -363,7 +420,7 @@ function App() {
         </div>
       )}
 
-      <footer><span>HIDDEN SEASON</span><p>Futbol hafızana ne kadar güveniyorsun?</p><span>2026</span></footer>
+      <footer><span>HIDDEN STAR</span><p>Futbol hafızana ne kadar güveniyorsun?</p><span>2026</span></footer>
     </div>
   )
 }

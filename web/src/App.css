@@ -188,7 +188,15 @@ button { color: inherit; }
 .clue-copy { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
 .clue-copy small { color: #89978f; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 .clue-copy strong { overflow: hidden; text-overflow: ellipsis; color: #c4cec8; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: .03em; white-space: nowrap; }
-.revealed .clue-copy strong { color: var(--paper); font-size: 20px; }
+.revealed .clue-copy strong {
+  overflow: visible;
+  color: var(--paper);
+  font-size: clamp(15px, 1.45vw, 20px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
 .clue-cost { align-self: start; color: var(--orange); font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 13px; }
 .revealed .clue-cost { color: var(--acid); font-size: 9px; letter-spacing: .08em; }
 .clue-card.free .clue-cost { color: var(--acid); font-size: 10px; letter-spacing: .04em; }
@@ -251,6 +259,14 @@ button { color: inherit; }
 .result-stats div:last-child { border-right: 0; }
 .result-stats strong { color: var(--paper); font-family: 'Barlow Condensed', sans-serif; font-size: 28px; }
 .result-stats span { color: var(--muted); font-size: 8px; letter-spacing: .15em; }
+.performance-panel { display: grid; grid-template-columns: 1fr 1.35fr; gap: 18px; margin: -10px 0 24px; }
+.performance-summary, .recent-performance { padding: 14px; border: 1px solid var(--line); background: rgba(255,255,255,.018); }
+.performance-panel span { display: block; margin-bottom: 9px; color: var(--muted); font-size: 8px; letter-spacing: .13em; }
+.performance-summary strong { color: var(--acid); font-family: 'Barlow Condensed', sans-serif; font-size: 30px; line-height: 1; }
+.performance-summary strong small { color: var(--muted); font-size: 12px; }
+.performance-summary em { display: block; margin-top: 7px; color: #89978f; font-size: 8px; font-style: normal; letter-spacing: .08em; }
+.recent-performance > div { display: flex; gap: 6px; align-items: end; min-height: 42px; }
+.recent-performance i { width: 32px; min-height: 25px; height: max(25px, calc(var(--score) * .42)); display: grid; place-items: end center; padding-bottom: 4px; color: var(--paper); background: linear-gradient(to top, rgba(201,255,56,.3), rgba(201,255,56,.08)); border-bottom: 2px solid var(--acid); font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-style: normal; }
 .share-button { min-height: 52px; }
 
 .toast { position: fixed; left: 50%; bottom: 25px; z-index: 40; transform: translateX(-50%); padding: 12px 18px; color: var(--paper); border: 1px solid #4b5c53; background: #14221b; box-shadow: 0 12px 40px rgba(0,0,0,.4); font-size: 12px; }
@@ -311,6 +327,7 @@ footer p { margin: 0; }
   .guess-form { grid-template-columns: 1fr; }
   .guess-button { height: 54px; }
   .result-copy h2 { font-size: 44px; }
+  .performance-panel { grid-template-columns: 1fr; }
   footer p { display: none; }
   .how-to-modal { padding: 34px 24px 25px; }
   .how-to-modal h2 { font-size: 36px; }
