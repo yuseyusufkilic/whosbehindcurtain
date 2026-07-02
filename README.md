@@ -29,18 +29,18 @@ Seçim sabit seed ile deterministiktir. Aynı oyuncu iki gün üst üste gelmez.
     docker build -t hidden-star .
     docker run --rm -p 8080:8080 -v hidden-star-data:/data hidden-star
 
-/data oyuncu ilerlemesini ve Data Protection anahtarlarını kalıcı tutar.
+/data yerel ve Droplet tabanlı kurulumlarda oyuncu ilerlemesini kalıcı tutar. `DATABASE_URL` tanımlandığında ilerleme PostgreSQL'de saklanır.
 
-## GitHub Actions ve Azure
+## GitHub Actions ve Heroku
 
-.github/workflows/deploy.yml her main push'unda ve pazartesi günleri güncel veriyi indirir, üç yıllık katalog üretir, kontrolleri çalıştırır ve Azure Container Apps'e dağıtır.
+.github/workflows/deploy.yml her main push'unda güncel veriyi indirir, üç yıllık kataloğu doğrular, web/API kontrollerini ve container build'ini çalıştırır.
 
-Repository secrets:
+Heroku uygulaması Container stack kullanır ve `heroku.yml` üzerinden Dockerfile'ı build eder. Gerekli config vars:
 
-- AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
-- AZURE_RESOURCE_GROUP, AZURE_CONTAINER_APP
-- GHCR_PAT: read:packages yetkili uzun ömürlü GitHub tokenı
+- `DATABASE_URL`: Heroku Postgres eklendiğinde otomatik tanımlanır.
+- `SESSION_SIGNING_KEY`: En az 32 karakterlik rastgele ve kalıcı bir secret.
+- `Proxy__TrustForwardedHeaders`: `true`
 
-Container App için port 8080, external ingress, minimum replica 0 ve /data yoluna Azure Files volume önerilir. /health endpoint'i probe olarak kullanılabilir.
+Heroku'nun verdiği `PORT` çalışma anında otomatik kullanılır. `/api/health` health endpoint'idir.
 
 Veri kaynağı: dcaribou/transfermarkt-datasets (CC0).

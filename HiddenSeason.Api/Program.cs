@@ -1,10 +1,14 @@
 using System.Threading.RateLimiting;
 using HiddenSeason.Api.Domain;
 using HiddenSeason.Api.Services;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (int.TryParse(Environment.GetEnvironmentVariable("PORT"), out var herokuPort))
+{
+    builder.WebHost.UseUrls($"http://+:{herokuPort}");
+}
 
 builder.WebHost.ConfigureKestrel(options =>
 {
@@ -15,17 +19,6 @@ builder.WebHost.ConfigureKestrel(options =>
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
-
-var dataProtection = builder.Services
-    .AddDataProtection()
-    .SetApplicationName("HiddenStar");
-
-var keysPath = builder.Configuration["DataProtection:KeysPath"];
-if (!string.IsNullOrWhiteSpace(keysPath))
-{
-    Directory.CreateDirectory(keysPath);
-    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
-}
 
 var allowedOrigins = builder.Configuration
     .GetSection("Cors:AllowedOrigins")

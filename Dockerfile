@@ -16,10 +16,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 COPY --from=api-build /app ./
 COPY --from=web-build /src/web/dist ./wwwroot
-RUN mkdir -p /data/progress /data/keys && chown -R $APP_UID:$APP_UID /data
+RUN mkdir -p /data/progress && chown -R $APP_UID:$APP_UID /data
 ENV ASPNETCORE_URLS=http://+:8080
 ENV Game__ProgressPath=/data/progress
-ENV DataProtection__KeysPath=/data/keys
 ENV Proxy__TrustForwardedHeaders=true
 EXPOSE 8080
 USER $APP_UID
