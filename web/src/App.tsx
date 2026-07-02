@@ -222,11 +222,21 @@ function App() {
       : '—'
     const text = `HIDDEN STAR #${puzzle.number} · ${puzzle.publishDate}\n${puzzle.score}/100 · ${puzzle.guesses.length}/3 TAHMİN\n${blocks}\nORTALAMA ${average} · SON 5 ${recent}\nhiddenstar.app`
 
-    if (navigator.share) {
-      await navigator.share({ text })
-    } else {
-      await navigator.clipboard.writeText(text)
-      setMessage('Sonuç panoya kopyalandı.')
+    try {
+      if (navigator.share) {
+        await navigator.share({ text })
+      } else {
+        await navigator.clipboard.writeText(text)
+        setMessage('Sonuç panoya kopyalandı.')
+      }
+
+      await fetch(`/api/puzzles/${puzzle.puzzleId}/share`, {
+        method: 'POST',
+        headers: { 'X-HS-Request': 'game' },
+      })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setMessage('Sonuç paylaşılamadı.')
     }
   }
 

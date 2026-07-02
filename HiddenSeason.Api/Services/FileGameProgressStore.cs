@@ -213,7 +213,10 @@ public sealed class FileGameProgressStore
             Database = uri.AbsolutePath.TrimStart('/'),
             Username = Uri.UnescapeDataString(credentials[0]),
             Password = credentials.Length > 1 ? Uri.UnescapeDataString(credentials[1]) : string.Empty,
-            SslMode = SslMode.Require
+            SslMode = SslMode.Require,
+            MaxPoolSize = 8,
+            Timeout = 15,
+            CommandTimeout = 10
         }.ConnectionString;
     }
 

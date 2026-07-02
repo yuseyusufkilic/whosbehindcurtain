@@ -94,6 +94,7 @@ builder.Services.AddSingleton(sp => PuzzleCatalog.Load(
     builder.Configuration["Game:CatalogPath"] ?? "Data/puzzles.json"));
 builder.Services.AddSingleton<AnonymousSessionService>();
 builder.Services.AddSingleton<FileGameProgressStore>();
+builder.Services.AddSingleton<GameAnalyticsStore>();
 
 var app = builder.Build();
 
@@ -115,6 +116,7 @@ api.MapGet("/puzzles/daily", async (
     PuzzleCatalog catalog,
     AnonymousSessionService anonymousSessions,
     FileGameProgressStore progress,
+    GameAnalyticsStore analytics,
     CancellationToken cancellationToken) =>
 {
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -134,6 +136,9 @@ api.MapGet("/puzzles/daily", async (
         session => session.ToPuzzleResponse(puzzle),
         cancellationToken);
     var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    await analytics.TrackAsync(
+        subjectId, "puzzle_started", puzzle.Id, "started",
+        response.Score, response.AttemptsLeft, cancellationToken: cancellationToken);
     return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("read");
 
@@ -163,6 +168,7 @@ api.MapGet("/puzzles/{puzzleId}",async (
     PuzzleCatalog catalog,
     AnonymousSessionService anonymousSessions,
     FileGameProgressStore progress,
+    GameAnalyticsStore analytics,
     CancellationToken cancellationToken) =>
 {
     if (!InputGuard.IsSafeId(puzzleId))
@@ -184,6 +190,9 @@ api.MapGet("/puzzles/{puzzleId}",async (
         session => session.ToPuzzleResponse(puzzle),
         cancellationToken);
     var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    await analytics.TrackAsync(
+        subjectId, "puzzle_started", puzzle.Id, "started",
+        response.Score, response.AttemptsLeft, cancellationToken: cancellationToken);
     return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("read");
 
@@ -194,6 +203,7 @@ api.MapPost("/puzzles/{puzzleId}/reveal",async (
     PuzzleCatalog catalog,
     AnonymousSessionService anonymousSessions,
     FileGameProgressStore progress,
+    GameAnalyticsStore analytics,
     CancellationToken cancellationToken) =>
 {
     if (context.Request.Headers["X-HS-Request"] != "game")
@@ -226,6 +236,7 @@ api.MapPost("/puzzles/{puzzleId}/reveal",async (
                     outcome.Value,
                     outcome.CostApplied,
                     session.Score,
+                    session.AttemptsLeft,
                     session.FreeClueAvailable,
                     session.IsComplete,
                     session.IsComplete ? session.BuildResult(puzzle) : null,
@@ -239,6 +250,18 @@ api.MapPost("/puzzles/{puzzleId}/reveal",async (
     }
 
     var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    await analytics.TrackAsync(
+        subjectId, "clue_revealed", puzzle.Id, body.ClueId,
+        response.Score, response.AttemptsLeft,
+        solved: response.Result?.Solved,
+        cancellationToken: cancellationToken);
+    if (response.IsComplete)
+    {
+        await analytics.TrackAsync(
+            subjectId, "game_completed", puzzle.Id, "completed",
+            response.Score, response.AttemptsLeft, response.Result?.Solved,
+            cancellationToken);
+    }
     return Results.Ok(response with { Stats = stats });
 }).RequireRateLimiting("mutation");
 
@@ -249,6 +272,7 @@ api.MapPost("/puzzles/{puzzleId}/guess",async (
     PuzzleCatalog catalog,
     AnonymousSessionService anonymousSessions,
     FileGameProgressStore progress,
+    GameAnalyticsStore analytics,
     CancellationToken cancellationToken) =>
 {
     if (context.Request.Headers["X-HS-Request"] != "game")
@@ -291,7 +315,60 @@ api.MapPost("/puzzles/{puzzleId}/guess",async (
         cancellationToken);
 
     var stats = await progress.GetStatsAsync(subjectId, cancellationToken);
+    if (!response.Duplicate)
+    {
+        await analytics.TrackAsync(
+            subjectId, "guess_submitted", puzzle.Id, $"attempts-left-{response.AttemptsLeft}",
+            response.Score, response.AttemptsLeft, response.Correct,
+            cancellationToken);
+    }
+    if (response.IsComplete)
+    {
+        await analytics.TrackAsync(
+            subjectId, "game_completed", puzzle.Id, "completed",
+            response.Score, response.AttemptsLeft, response.Result?.Solved,
+            cancellationToken);
+    }
     return Results.Ok(response with { Stats = stats });
+}).RequireRateLimiting("mutation");
+
+api.MapPost("/puzzles/{puzzleId}/share", async (
+    string puzzleId,
+    HttpContext context,
+    PuzzleCatalog catalog,
+    AnonymousSessionService anonymousSessions,
+    FileGameProgressStore progress,
+    GameAnalyticsStore analytics,
+    CancellationToken cancellationToken) =>
+{
+    if (context.Request.Headers["X-HS-Request"] != "game"
+        || !InputGuard.IsSafeId(puzzleId))
+    {
+        return Results.BadRequest(new { message = "Geçersiz istek." });
+    }
+
+    var puzzle = catalog.GetById(puzzleId);
+    if (puzzle is null || puzzle.PublishDate > DateOnly.FromDateTime(DateTime.UtcNow))
+    {
+        return Results.NotFound(new { message = "Puzzle bulunamadı." });
+    }
+
+    var subjectId = anonymousSessions.GetOrCreate(context);
+    var response = await progress.ExecuteAsync(
+        subjectId,
+        puzzle.Id,
+        session => session.ToPuzzleResponse(puzzle),
+        cancellationToken);
+    if (!response.IsComplete)
+    {
+        return Results.BadRequest(new { message = "Tamamlanmamış oyun paylaşılamaz." });
+    }
+
+    await analytics.TrackAsync(
+        subjectId, "result_shared", puzzle.Id, "shared",
+        response.Score, response.AttemptsLeft, response.IsSolved,
+        cancellationToken);
+    return Results.NoContent();
 }).RequireRateLimiting("mutation");
 
 api.MapGet("/players/search", (string? q, PuzzleCatalog catalog) =>

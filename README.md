@@ -45,4 +45,6 @@ Heroku uygulaması Container stack kullanır ve `heroku.yml` üzerinden Dockerfi
 
 Heroku'nun verdiği `PORT` çalışma anında otomatik kullanılır. `/api/health` health endpoint'idir.
 
+Anonim ürün analitiği aynı Postgres veritabanındaki `hidden_star_events` tablosuna yazılır. IP adresi ve user-agent saklanmaz. Heroku Dataclips için hazır sorgular `docs/heroku-analytics.sql` dosyasındadır.
+
 Veri kaynağı: dcaribou/transfermarkt-datasets (CC0).

@@ -58,6 +58,7 @@ public sealed record RevealResponse(
     string Value,
     int CostApplied,
     int Score,
+    int AttemptsLeft,
     bool FreeClueAvailable,
     bool IsComplete,
     GameResult? Result,
