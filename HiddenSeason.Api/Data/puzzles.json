@@ -1,0 +1,72 @@
+{
+  "candidatePlayers": [
+    "Robin van Persie", "Alex de Souza", "Didier Drogba", "Wesley Sneijder",
+    "Mesut Özil", "Luis Nani", "Mario Gomez", "Samuel Eto'o", "Demba Ba",
+    "Ricardo Quaresma", "Moussa Sow", "Dirk Kuyt", "Emmanuel Emenike",
+    "Edin Dzeko", "Dries Mertens", "Mauro Icardi", "Fernando Muslera",
+    "Arda Turan", "Burak Yılmaz", "Cristiano Ronaldo", "Lionel Messi",
+    "Zlatan Ibrahimovic", "Neymar", "Thierry Henry", "Wayne Rooney"
+  ],
+  "puzzles": [
+    {
+      "id": "demo-2010-sneijder",
+      "number": "001",
+      "publishDate": "2026-06-28",
+      "answer": "Wesley Sneijder",
+      "seasonLabel": "2009/10",
+      "photoUrl": "https://img.a.transfermarkt.technology/portrait/header/27992-1516382956.jpg?lm=1",
+      "clubLogoUrl": "https://tmssl.akamaized.net/images/wappen/head/46.png?lm=1406739123",
+      "clues": [
+        { "id": "position", "label": "Mevki", "value": "Orta Saha", "cost": 4, "icon": "field" },
+        { "id": "age", "label": "O sezonki yaş", "value": "25", "cost": 5, "icon": "age" },
+        { "id": "appearances", "label": "Lig maçı", "value": "34", "cost": 6, "icon": "shirt" },
+        { "id": "goals", "label": "Lig golü", "value": "9", "cost": 8, "icon": "ball" },
+        { "id": "assists", "label": "Lig asisti", "value": "10", "cost": 8, "icon": "assist" },
+        { "id": "nationality", "label": "Milliyet", "value": "Hollanda", "cost": 10, "icon": "flag" },
+        { "id": "season", "label": "Sezon", "value": "2009/10", "cost": 12, "icon": "calendar" },
+        { "id": "league", "label": "Lig", "value": "Serie A", "cost": 16, "icon": "trophy" },
+        { "id": "club", "label": "Kulüp", "value": "Inter Milan", "cost": 20, "icon": "badge" }
+      ]
+    },
+    {
+      "id": "demo-2012-drogba",
+      "number": "002",
+      "publishDate": "2026-06-29",
+      "answer": "Didier Drogba",
+      "seasonLabel": "2011/12",
+      "photoUrl": "https://img.a.transfermarkt.technology/portrait/header/15441-1516382956.jpg?lm=1",
+      "clubLogoUrl": "https://tmssl.akamaized.net/images/wappen/head/631.png?lm=1406739123",
+      "clues": [
+        { "id": "position", "label": "Mevki", "value": "Santrfor", "cost": 4, "icon": "field" },
+        { "id": "age", "label": "O sezonki yaş", "value": "33", "cost": 5, "icon": "age" },
+        { "id": "appearances", "label": "Lig maçı", "value": "32", "cost": 6, "icon": "shirt" },
+        { "id": "goals", "label": "Lig golü", "value": "5", "cost": 8, "icon": "ball" },
+        { "id": "assists", "label": "Lig asisti", "value": "4", "cost": 8, "icon": "assist" },
+        { "id": "nationality", "label": "Milliyet", "value": "Fildişi Sahili", "cost": 10, "icon": "flag" },
+        { "id": "season", "label": "Sezon", "value": "2011/12", "cost": 12, "icon": "calendar" },
+        { "id": "league", "label": "Lig", "value": "Premier Lig", "cost": 16, "icon": "trophy" },
+        { "id": "club", "label": "Kulüp", "value": "Chelsea", "cost": 20, "icon": "badge" }
+      ]
+    },
+    {
+      "id": "demo-2015-rvp",
+      "number": "003",
+      "publishDate": "2026-06-30",
+      "answer": "Robin van Persie",
+      "seasonLabel": "2015/16",
+      "photoUrl": "https://img.a.transfermarkt.technology/portrait/header/4380-1516382956.jpg?lm=1",
+      "clubLogoUrl": "https://tmssl.akamaized.net/images/wappen/head/36.png?lm=1406739123",
+      "clues": [
+        { "id": "position", "label": "Mevki", "value": "Santrfor", "cost": 4, "icon": "field" },
+        { "id": "age", "label": "O sezonki yaş", "value": "32", "cost": 5, "icon": "age" },
+        { "id": "appearances", "label": "Lig maçı", "value": "31", "cost": 6, "icon": "shirt" },
+        { "id": "goals", "label": "Lig golü", "value": "16", "cost": 8, "icon": "ball" },
+        { "id": "assists", "label": "Lig asisti", "value": "3", "cost": 8, "icon": "assist" },
+        { "id": "nationality", "label": "Milliyet", "value": "Hollanda", "cost": 10, "icon": "flag" },
+        { "id": "season", "label": "Sezon", "value": "2015/16", "cost": 12, "icon": "calendar" },
+        { "id": "league", "label": "Lig", "value": "Süper Lig", "cost": 16, "icon": "trophy" },
+        { "id": "club", "label": "Kulüp", "value": "Fenerbahçe", "cost": 20, "icon": "badge" }
+      ]
+    }
+  ]
+}

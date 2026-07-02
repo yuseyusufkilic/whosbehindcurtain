@@ -1,0 +1,17 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Node / Web
+node_modules/
+dist/
+.env
+.env.local
+
+# Data (progress files - user-specific)
+HiddenSeason.Api/Data/progress/
+HiddenSeason.Api/bin/
+HiddenSeason.Api/obj/

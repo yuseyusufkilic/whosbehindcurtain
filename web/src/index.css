@@ -1,0 +1,4 @@
+html { scroll-behavior: smooth; }
+body { margin: 0; }
+#root { min-height: 100vh; }
+::selection { color: #0a1310; background: #c9ff38; }
