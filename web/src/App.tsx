@@ -216,18 +216,19 @@ function App() {
 
   async function shareResult() {
     if (!puzzle) return
+    const shareUrl = 'https://hiddenstar-1ecc411cc20f.herokuapp.com/'
     const blocks = puzzle.clues.map(clue => clue.isRevealed ? '🟩' : '⬛').join('')
     const average = puzzle.stats?.gamesPlayed ? `${puzzle.stats.averageScore}/100` : '—'
     const recent = puzzle.stats?.lastFiveScores.length
       ? puzzle.stats.lastFiveScores.join(' · ')
       : '—'
-    const text = `HIDDEN STAR #${puzzle.number} · ${puzzle.publishDate}\n${puzzle.score}/100 · ${puzzle.guesses.length}/3 TAHMİN\n${blocks}\nORTALAMA ${average} · SON 5 ${recent}\nhiddenstar.app`
+    const text = `HIDDEN STAR #${puzzle.number} · ${puzzle.publishDate}\n${puzzle.score}/100 · ${puzzle.guesses.length}/3 TAHMİN\n${blocks}\nORTALAMA ${average} · SON 5 ${recent}`
 
     try {
       if (navigator.share) {
-        await navigator.share({ text })
+        await navigator.share({ text, url: shareUrl })
       } else {
-        await navigator.clipboard.writeText(text)
+        await navigator.clipboard.writeText(`${text}\n${shareUrl}`)
         setMessage('Sonuç panoya kopyalandı.')
       }
 
