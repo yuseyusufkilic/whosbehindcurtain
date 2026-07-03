@@ -121,6 +121,9 @@ button { color: inherit; }
 .headline-top span { display: inline-block; }
 .intro h1 em { display: block; }
 .intro h1 em { color: transparent; -webkit-text-stroke: 1.5px var(--acid); font-style: italic; }
+.season-banner { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 23px 0 0; }
+.season-banner span { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .2em; }
+.season-banner strong { padding: 5px 10px; color: var(--ink); background: var(--acid); font-family: 'Barlow Condensed', sans-serif; font-size: 20px; line-height: 1; }
 .subtitle { color: var(--muted); margin: 24px 0 0; font-size: 14px; }
 
 .scoreboard {

@@ -96,9 +96,9 @@ public sealed class FileGameProgressStore
                 completed.Length,
                 completed.Length == 0
                     ? 0
-                    : (int)Math.Round(completed.Average(game => game.Score)),
+                    : (int)Math.Round(completed.Average(game => game.GetAwardedScore())),
                 completed.Count(game => game.IsSolved),
-                completed.Take(5).Select(game => game.Score).ToArray());
+                completed.Take(5).Select(game => game.GetAwardedScore()).ToArray());
         }
         finally
         {

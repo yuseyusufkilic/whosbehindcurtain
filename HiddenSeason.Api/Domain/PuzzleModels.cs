@@ -36,6 +36,7 @@ public sealed record PuzzleResponse(
     string PuzzleId,
     string Number,
     DateOnly PublishDate,
+    string Season,
     int Score,
     int AttemptsLeft,
     bool IsComplete,

@@ -40,6 +40,7 @@ type Puzzle = {
   puzzleId: string
   number: string
   publishDate: string
+  season: string
   score: number
   attemptsLeft: number
   isComplete: boolean
@@ -103,7 +104,7 @@ function App() {
   }, [guess, puzzle?.isComplete])
 
   useEffect(() => {
-    if (!puzzle?.isComplete) return
+    if (!puzzle?.isComplete || activePuzzleId) return
 
     const today = new Date().toISOString().slice(0, 10)
     const lastPlayed = localStorage.getItem('hidden-star-last-played')
@@ -117,7 +118,7 @@ function App() {
     localStorage.setItem('hidden-star-last-played', today)
     localStorage.setItem('hidden-star-streak', String(nextStreak))
     setStreak(nextStreak)
-  }, [puzzle?.isComplete, streak])
+  }, [activePuzzleId, puzzle?.isComplete, streak])
 
   async function reveal(clueId: string) {
     if (!puzzle || puzzle.isComplete || busyClue) return
@@ -271,6 +272,7 @@ function App() {
             <span className="headline-top"><span>PERDENİN</span><span>ARKASINDA</span></span>
             <em>KİM VAR?</em>
           </h1>
+          <p className="season-banner"><span>HEDEF SEZON</span><strong>{puzzle.season}</strong></p>
           <p className="subtitle">İpuçlarını satın al. Puanını koru. Futbolcuyu bul.</p>
         </section>
 
@@ -423,7 +425,7 @@ function App() {
             <ol>
               <li><strong>Bir ipucu seç.</strong><span>Düşük maliyetli ipuçlarından seçtiğin ilki ücretsiz.</span></li>
               <li><strong>Puanını koru.</strong><span>Sonraki her ipucu, üzerinde yazan puanı düşürür.</span></li>
-              <li><strong>Üç hakkın var.</strong><span>Her yanlış tahmin 10 puan götürür.</span></li>
+              <li><strong>Üç hakkın var.</strong><span>Her yanlış tahmin 10 puan götürür; üçünde de bilemezsen skorun 0 olur.</span></li>
             </ol>
             <button className="modal-primary" onClick={() => setShowHelp(false)}>SAHAYA ÇIK →</button>
           </section>

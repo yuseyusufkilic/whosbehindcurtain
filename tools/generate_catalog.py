@@ -191,7 +191,6 @@ def main() -> None:
             ("goals", "Lig golü", str(item["goals"]), 8, "ball"),
             ("assists", "Lig asisti", str(item["assists"]), 8, "assist"),
             ("nationality", "Milliyet", item["nationality"], 10, "flag"),
-            ("season", "Sezon", season_label(item["season"]), 12, "calendar"),
             ("league", "Lig", item["league"], 16, "trophy"),
             ("club", "Kulüp", item["club"], 20, "badge"),
         ]

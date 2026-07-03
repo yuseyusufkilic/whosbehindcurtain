@@ -71,6 +71,10 @@ public sealed class GameSession
         {
             AttemptsLeft--;
             Score = Math.Max(0, Score - 10);
+            if (AttemptsLeft == 0)
+            {
+                Score = 0;
+            }
         }
 
         IsComplete = IsSolved || AttemptsLeft == 0 || Score == 0;
@@ -82,13 +86,14 @@ public sealed class GameSession
         puzzle.Id,
         puzzle.Number,
         puzzle.PublishDate,
-        Score,
+        puzzle.SeasonLabel,
+        GetAwardedScore(),
         AttemptsLeft,
         IsComplete,
         IsSolved,
         FreeClueAvailable,
         Guesses,
-        puzzle.Clues.Select(clue =>
+        puzzle.Clues.Where(clue => clue.Id != "season").Select(clue =>
         {
             var isRevealed = RevealedClues.Contains(clue.Id);
             return new ClueResponse(
@@ -103,6 +108,8 @@ public sealed class GameSession
         }),
         IsComplete ? BuildResult(puzzle) : null,
         null);
+
+    public int GetAwardedScore() => IsComplete && !IsSolved ? 0 : Score;
 
     public GameResult BuildResult(DailyPuzzle puzzle) => new(
         puzzle.Answer,
